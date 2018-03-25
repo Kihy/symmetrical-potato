@@ -1,0 +1,56 @@
+diff --git a/demo/live.py b/demo/live.py
+index 5ff56e9..d8d0c14 100644
+--- a/demo/live.py
++++ b/demo/live.py
+@@ -16,9 +16,7 @@ args = parser.parse_args()
+ COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+ FONT = cv2.FONT_HERSHEY_SIMPLEX
+ 
+-
+-def cv2_demo(net, transform):
+-    def predict(frame):
++def predict(frame):
+         height, width = frame.shape[:2]
+         x = torch.from_numpy(transform(frame)[0]).permute(2, 0, 1)
+         x = Variable(x.unsqueeze(0))
+@@ -37,9 +35,10 @@ def cv2_demo(net, transform):
+                 j += 1
+         return frame
+ 
++def cv2_demo(net, transform):
+     # start video stream thread, allow buffer to fill
+     print("[INFO] starting threaded video stream...")
+-    stream = WebcamVideoStream(src=0).start()  # default camera
++    stream = WebcamVideoStream(src=-1).start()  # default camera
+     time.sleep(1.0)
+     # start fps timer
+     # loop over frames from the video file stream
+@@ -55,12 +54,16 @@ def cv2_demo(net, transform):
+         # keybindings for display
+         if key == ord('p'):  # pause
+             while True:
+-                key2 = cv2.waitKey(1) or 0xff
++                key = cv2.waitKey(1) or 0xff
+                 cv2.imshow('frame', frame)
+-                if key2 == ord('p'):  # resume
++                if key == ord('p') or key == ord('q'):  # resume on p or exit on esc key press.
+                     break
+         cv2.imshow('frame', frame)
+-        if key == 27:  # exit
++        if key == ord('q'):  # exit on esc key press.
++            # Release all the devices.
++            cv2.destroyAllWindows()
++            stream.stop()
++            stream.stream.release()  # Needed due to a bug in imutils.
+             break
+ 
+ 
+@@ -83,7 +86,4 @@ if __name__ == '__main__':
+ 
+     print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
+     print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+-
+-    # cleanup
+-    cv2.destroyAllWindows()
+-    stream.stop()
++  
